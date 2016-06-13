@@ -147,7 +147,7 @@ public class ReceiveActivity extends AppCompatActivity {
         return device.createInsecureRfcommSocketToServiceRecord(uuid);
     }
 
-    
+
 
     @Override
     protected void onPause() {
