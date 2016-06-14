@@ -73,26 +73,40 @@ public class ReceiveActivity extends AppCompatActivity {
                 if (msg.what == handlerState) {                                     //if message is what we want
                     String readMessage = (String) msg.obj;                                                                // msg.arg1 = bytes from connect thread
                     recDataString.append(readMessage);                                      //keep appending to string until ~
+
                     int endOfLineIndex = recDataString.indexOf("~");                    // determine the end-of-line
-                    if (endOfLineIndex > 0) {                                           // make sure there data before ~
-                        String dataInPrint = recDataString.substring(1, endOfLineIndex - 1);    // extract string
-                        L.m(dataInPrint);
-                        String[] readingStrings = dataInPrint.split("\\+");
-                        float[] readings = new float[readingStrings.length];
-                        for (int i = 0; i < readingStrings.length; i++){
-                            readings[i] = Float.valueOf(readingStrings[i]);
+                    if (endOfLineIndex > 0) { // make sure there data before ~
+                        int startOfLineIndex = recDataString.indexOf("#");
+                        if(startOfLineIndex > endOfLineIndex || startOfLineIndex == -1){
+                            startOfLineIndex = 0;
                         }
-                        arrayAdapter.add(readMessage.replace('+',' '));
-                        recDataString.delete(0, endOfLineIndex);
+                        String dataInPrint = recDataString.substring(startOfLineIndex, endOfLineIndex );    // extract string
+                        String[] readingStrings = dataInPrint.split("\\+");
+                        int[] readings = new int[readingStrings.length];
+                        for (int i = 0; i < readingStrings.length; i++){
+                            try {
+                                readings[i] = Integer.valueOf(readingStrings[i]);
+                            }
+                            catch (NumberFormatException e){
+
+                            }
+                        }
+                        String testConvert = "";
+                        for (int reading : readings){
+                            testConvert+=" " + reading;
+                        }
+                        arrayAdapter.add(testConvert);
+                        L.m(testConvert);
+                        scrollMyListViewToBottom();
+                        recDataString.delete(0, endOfLineIndex + 2);
                     }
                 }
+
             }
         };
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         checkBTState();
-
-
     }
 
 
@@ -203,12 +217,13 @@ public class ReceiveActivity extends AppCompatActivity {
         }
 
         public void run() {
-            byte[] buffer = new byte[256];
+            byte[] buffer = new byte[64];
             int bytes = -1;
             while(true){
                 try {
                     bytes = inputStream.read(buffer);
                     String readMessage = new String(buffer,0,bytes);
+//                    L.m(readMessage);
                     bluetoothIn.obtainMessage(handlerState,bytes,-1,readMessage).sendToTarget();
                 } catch (IOException e) {
                     break;
