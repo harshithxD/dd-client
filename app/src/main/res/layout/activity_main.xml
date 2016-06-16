@@ -31,11 +31,7 @@
         android:layout_height="wrap_content"
         android:text="@string/not_found"
         android:id="@+id/info_text"/>
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="backgroundProcessIntent"
-        android:text="Process Start"/>
+
 
     <LinearLayout
         android:layout_width="match_parent"

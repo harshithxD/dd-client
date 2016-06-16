@@ -19,8 +19,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name="BluetoothBackground"
-            android:exported="false"/>
+        <service android:name=".BluetoothBackground"/>
         <activity android:name=".ReceiveActivity"></activity>
     </application>
 

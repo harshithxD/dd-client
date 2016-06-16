@@ -100,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
 //            startActivity(i);
 
             Intent serviceIntent = new Intent(getBaseContext(),BluetoothBackground.class);
+            serviceIntent.putExtra(EXTRA_DEVICE_ADDRESS,address);
+            startService(serviceIntent);
         }
     };
 
