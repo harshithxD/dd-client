@@ -2,7 +2,12 @@ package com.example.harshith.client;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.Uri;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -16,13 +21,15 @@ import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static String EXTRA_DEVICE_ADDRESS;
+    public static String EXTRA_DEVICE_ADDRESS = "bluetoothDeviceAddress";
     TextView textConnectionStatus;
     ListView pairedListView;
 
     private BluetoothAdapter mBluetoothAdapter;
     private ArrayAdapter<String>  mPairedDevicesArrayAdapter;
 
+
+    Intent mServiceIntent;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
         pairedListView = (ListView) findViewById(R.id.paired_devices);
         pairedListView.setAdapter(mPairedDevicesArrayAdapter);
         pairedListView.setOnItemClickListener(mDeviceClickListener);
+
+
     }
 
     @Override
@@ -54,18 +63,14 @@ public class MainActivity extends AppCompatActivity {
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
 
         if(pairedDevices.size() > 0) {
-            findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
+            pairedListView.setVisibility(View.VISIBLE);
             for(BluetoothDevice bluetoothDevice : pairedDevices) {
                 mPairedDevicesArrayAdapter.add(bluetoothDevice.getName() + "\n" + bluetoothDevice.getAddress());
-
             }
         }
         else {
             mPairedDevicesArrayAdapter.add("No devices paired");
         }
-
-
-
     }
 
     private void checkBTState() {
@@ -90,9 +95,12 @@ public class MainActivity extends AppCompatActivity {
             String info = ((TextView) view).getText().toString();
             String address = info.substring(info.length() - 17);
 
-            Intent i = new Intent(MainActivity.this,ReceiveActivity.class);
-            i.putExtra(EXTRA_DEVICE_ADDRESS,address);
-            startActivity(i);
+//            Intent i = new Intent(MainActivity.this,ReceiveActivity.class);
+//            i.putExtra(EXTRA_DEVICE_ADDRESS,address);
+//            startActivity(i);
+
+            Intent serviceIntent = new Intent(getBaseContext(),BluetoothBackground.class);
         }
     };
+
 }
