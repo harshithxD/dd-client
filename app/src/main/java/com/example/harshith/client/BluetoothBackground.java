@@ -32,6 +32,9 @@ public class BluetoothBackground extends Service {
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
 
+
+
+
     private final class ServiceHandler extends Handler {
         InputStream inputStream = null;
         OutputStream outputStream = null;
@@ -48,34 +51,83 @@ public class BluetoothBackground extends Service {
                     tempOut = bluetoothSocket.getOutputStream();
                 }
                 catch (IOException e) {
-                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(),"Couldn't get streaming",Toast.LENGTH_SHORT).show();
                 }
 
                 inputStream = tempIn;
                 outputStream = tempOut;
             }
             catch (Exception e) {
-                e.printStackTrace();
+                Toast.makeText(getApplicationContext(),"Unknown Exception occured",Toast.LENGTH_SHORT).show();
             }
 
-            try {
-                byte[] buffer = new byte[64];
-                int bytes = -1;
-                while (true) {
-                    try {
-                        bytes = inputStream.read(buffer);
-                        String readMessage = new String(buffer,0,bytes);
+            final GlobalReadings globalReadings  = (GlobalReadings) getApplicationContext();
+            byte[] buffer = new byte[64];
+            int bytes = -1;
+            while (true) {
+                try {
+                    bytes = inputStream.read(buffer);
+                    String message = new String(buffer,0,bytes);
+                    stringBuilder.append(message);
+                    int endOfLineIndex = stringBuilder.indexOf("~");
+                    if (endOfLineIndex > 0) {
+                        int startOfLineIndex = stringBuilder.indexOf("#");
+                        if (startOfLineIndex > endOfLineIndex || startOfLineIndex == -1) {
+                            startOfLineIndex = 0;
+                        }
+                        else if (startOfLineIndex == 0) {
+                            startOfLineIndex = 1;
+                        }
+                        String dataIn = stringBuilder.substring(startOfLineIndex, endOfLineIndex);
 
-                    }
-                    catch (IOException e){
-                        Toast.makeText(getApplicationContext(),"Could not read data",Toast.LENGTH_SHORT).show();
+                        String[] readingStrings = dataIn.split("\\+");
+                        int[] readings = new int[readingStrings.length];
+                        for (int i = 0; i != readingStrings.length; i++) {
+                            try {
+                                readings[i] = Integer.valueOf(readingStrings[i]);
+                            } catch (NumberFormatException e) {
+
+                            }
+                            catch (NullPointerException e) {
+
+                            }
+                        }
+                        String testConvert = "";
+                        for (int reading : readings) {
+                            testConvert += " " + reading;
+                        }
+                        L.m(testConvert);
+                        stringBuilder.delete(0, endOfLineIndex + 2);
+
+                        int[] flex = new int[5];
+                        for (int i = 0; i != 5; i++) {
+                            try {
+                                flex[i] = readings[i];
+                            }
+                            catch (ArrayIndexOutOfBoundsException e) {
+
+                            }
+                        }
+
+                        int[] mpu = new int[6];
+                        for (int i = 0; i != 6; i++) {
+                            try {
+                                mpu[i] = readings[5 + i];
+                            }
+                            catch (ArrayIndexOutOfBoundsException e) {
+
+                            }
+                        }
+
+                        globalReadings.setFlex(flex);
+                        globalReadings.setFlex(mpu);
                     }
                 }
+                catch (IOException e){
+                    Toast.makeText(getApplicationContext(),"Could not read data",Toast.LENGTH_SHORT).show();
+                }
             }
-            catch (Exception e){
-                e.printStackTrace();
-            }
-            stopSelf(msg.arg1);
+//            stopSelf(msg.arg1);
         }
     }
 
@@ -87,7 +139,8 @@ public class BluetoothBackground extends Service {
     private static final UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static String address;
 
-    private Handler handler;
+    final int handlerState = 0;
+
 
 
 
@@ -95,55 +148,11 @@ public class BluetoothBackground extends Service {
     @Override
     public void onCreate() {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        final GlobalReadings globalReadings = (GlobalReadings) getApplicationContext();
         if(bluetoothAdapter == null) {
             Toast.makeText(getApplicationContext(),"Your device doesn't support bluetooth",Toast.LENGTH_SHORT).show();
             stopSelf();
         }
-        handler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                String message = (String) msg.obj;
-                stringBuilder.append(message);
-                int endOfLineIndex = stringBuilder.indexOf("~");
-                if (endOfLineIndex > 0){
-                    int startOfLineIndex = stringBuilder.indexOf("#");
-                    if(startOfLineIndex > endOfLineIndex || startOfLineIndex == -1){
-                        startOfLineIndex = 0;
-                    }
-                    String dataIn = stringBuilder.substring(startOfLineIndex,endOfLineIndex);
-                    String[] readingStrings = dataIn.split("\\+");
-                    int[] readings = new int[readingStrings.length];
-                    for(int i = 0; i != readingStrings.length;i++) {
-                        try {
-                            readings[i] = Integer.getInteger(readingStrings[i]);
-                        }
-                        catch (NumberFormatException e ) {
 
-                        }
-                    }
-                    String testConvert = "";
-                    for (int reading : readings){
-                        testConvert+=" " + reading;
-                    }
-                    L.m(testConvert);
-                    stringBuilder.delete(0,endOfLineIndex + 2);
-
-                    int[] flex = new int[5];
-                    for(int i = 0;i != 5;i++){
-                        flex[i] = readings[i];
-                    }
-
-                    int[] mpu = new int[6];
-                    for(int i = 0;i != 6;i++) {
-                        mpu[i] = readings[5 + i];
-                    }
-
-                    globalReadings.setFlex(flex);
-                    globalReadings.setFlex(mpu);
-                }
-            }
-        };
 
         HandlerThread thread = new HandlerThread("BluetoothReceiver", Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
@@ -151,6 +160,9 @@ public class BluetoothBackground extends Service {
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper);
     }
+
+
+
 
     @Override
     public int onStartCommand(Intent intent,int flags,int startId) {
@@ -168,12 +180,12 @@ public class BluetoothBackground extends Service {
                     bluetoothSocket.close();
                 }
                 catch (IOException e1) {
-                    e1.printStackTrace();
+                    Toast.makeText(getApplicationContext(),"Couldn't make a connection",Toast.LENGTH_SHORT).show();
                 }
             }
         }
         catch (IOException e){
-            e.printStackTrace();
+            Toast.makeText(getApplicationContext(),"Couldn't make a connection",Toast.LENGTH_SHORT).show();
         }
 
 
@@ -184,13 +196,26 @@ public class BluetoothBackground extends Service {
         return START_STICKY;
     }
 
+
+
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
+
+
+
+
     @Override
     public void onDestroy() {
+        if(bluetoothSocket != null) {
+            try {
+                bluetoothSocket.close();
+            } catch (IOException e) {
+                Toast.makeText(getApplicationContext(),"Couldn't close the connection",Toast.LENGTH_SHORT).show();
+            }
+        }
         Toast.makeText(getApplicationContext(),"Service Completed",Toast.LENGTH_SHORT).show();
     }
 }
