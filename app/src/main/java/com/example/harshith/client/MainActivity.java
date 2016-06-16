@@ -1,11 +1,14 @@
 package com.example.harshith.client;
 
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +21,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Set;
+import java.util.jar.Manifest;
+import android.os.Build;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -71,6 +76,11 @@ public class MainActivity extends AppCompatActivity {
         else {
             mPairedDevicesArrayAdapter.add("No devices paired");
         }
+        if(Build.VERSION.SDK_INT == Build.VERSION_CODES.M) {
+            if (checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.CAMERA},1);
+            }
+        }
     }
 
     private void checkBTState() {
@@ -94,10 +104,6 @@ public class MainActivity extends AppCompatActivity {
 
             String info = ((TextView) view).getText().toString();
             String address = info.substring(info.length() - 17);
-
-//            Intent i = new Intent(MainActivity.this,ReceiveActivity.class);
-//            i.putExtra(EXTRA_DEVICE_ADDRESS,address);
-//            startActivity(i);
 
             Intent serviceIntent = new Intent(getBaseContext(),BluetoothBackground.class);
             serviceIntent.putExtra(EXTRA_DEVICE_ADDRESS,address);
