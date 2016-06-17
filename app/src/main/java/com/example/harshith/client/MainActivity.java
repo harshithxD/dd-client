@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
 //            Intent i = new Intent(MainActivity.this,ReceiveActivity.class);
 //            i.putExtra(EXTRA_DEVICE_ADDRESS,address);
 //            startActivity(i);
-            Intent i = new Intent(MainActivity.this,ReceiveService.class);
+            Intent i = new Intent(getBaseContext(),ReceiveService.class);
             i.putExtra(EXTRA_DEVICE_ADDRESS,address);
             startService(i);
         }
